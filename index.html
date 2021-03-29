@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <!-- Bootstrap CSS -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-eOJMYsd53ii+scO/bJGFsiCZc+5NDVN2yr8+0RDqr0Ql0h+rP48ckxlpbzKgwra6"
+      crossorigin="anonymous"
+    />
+    <style>
+      main aside {
+        z-index: 3;
+      }
+    </style>
+    <title>Random</title>
+  </head>
+  <body>
+    <header class="my-4">
+      <h1 class="text-center">Random</h1>
+    </header>
+    <main class="position-relative" id="random">
+      <aside
+        class="position-absolute bg-white w-100 h-100"
+        :class="{ invisible : init }"
+      ></aside>
+      <form class="container">
+        <div class="input-group mb-3">
+          <button
+            class="btn btn-outline-secondary dropdown-toggle"
+            type="button"
+            data-bs-toggle="dropdown"
+            aria-expanded="false"
+          >
+            Length: {{ option.length.current }}
+          </button>
+          <ul class="dropdown-menu">
+            <li v-for="item in option.length.shortcut">
+              <button
+                class="dropdown-item"
+                :class="{ active: item == option.length.current }"
+                @click.prevent="option.length.current = item"
+              >
+                {{ item }}
+              </button>
+            </li>
+          </ul>
+          <input
+            type="range"
+            class="form-control form-range px-2 h-auto"
+            :min="option.length.min"
+            :max="option.length.max"
+            name="length"
+            v-model="option.length.current"
+          />
+          <button class="btn btn-primary" type="button" name="generate" @click="render()">
+            Generate
+          </button>
+        </div>
+        <div class="input group">
+          <div class="form-check form-switch form-check-inline" v-for="(v, k) in option.character">
+            <input
+              class="form-check-input"
+              type="checkbox"
+              :id="'character-' + k"
+              v-model="v.enable"
+            />
+            <label class="form-check-label" :for="'character-' + k"
+              >{{ d.capitalize(k) }}</label
+            >
+          </div>
+        </div>
+        <hr />
+        <input
+          type="text"
+          class="form-control form-control-lg text-center font-monospace"
+          readonly
+          v-model="result"
+        />
+      </form>
+    </main>
+
+    <script src="https://unpkg.com/vue@next"></script>
+    <!-- <script src="https://unpkg.com/vue@3.0.9/dist/vue.global.prod.js" crossorigin="anonymous"></script> -->
+    <script
+      src="https://cdn.jsdelivr.net/npm/lodash@4.17.21/lodash.min.js"
+      integrity="sha256-qXBd/EfAdjOA2FGrGAG+b3YBn2tn5A6bhz+LSgYD96k="
+      crossorigin="anonymous"
+    ></script>
+    <script>
+      /* global Vue _ */
+      const rand = {
+        data () {
+          return {
+            init: false,
+            result: null,
+            option: {
+              length: {
+                min: 4,
+                max: 64,
+                current: 16,
+                shortcut: [4, 8, 16, 32, 64]
+              },
+              character: {
+                digit: { enable: true, label: '0123456789' },
+                uppercase: {
+                  enable: true,
+                  label: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+                },
+                lowercase: {
+                  enable: true,
+                  label: 'abcdefghijklmnopqrstuvwxyz'
+                },
+                special: {
+                  enable: false,
+                  case: {
+                    exclamation: { enable: true, label: '!' },
+                    questionMark: { enable: true, label: '?' },
+                    hash: { enable: true, label: '#' },
+                    ampersand: { enable: true, label: '&' },
+                    asterisk: { enable: true, label: '*' },
+                    comma: { enable: true, label: ',' },
+                    period: { enable: true, label: '.' },
+                    plus: { enable: true, label: '+' },
+                    minus: { enable: true, label: '-' },
+                    underscore: { enable: true, label: '_' },
+                    tilde: { enable: true, label: '~' },
+                    atSign: { enable: true, label: '@' },
+                    slash: { enable: false, label: '/' },
+                    parentheis: { false: false, label: '()' },
+                    brace: { enable: false, label: '{}' },
+                    bracket: { enable: false, label: '[]' },
+                    caret: { enable: false, label: '^' }
+                  }
+                }
+              }
+            }
+          }
+        },
+        computed: {
+          l () {
+            return this.option.length.current
+          },
+          // stackoverflow.com/questions/37694243
+          d () {
+            return _
+          }
+        },
+        methods: {
+          render () {
+            // stackoverflow.com/questions/27841362/
+            let o = new Array(this.l).fill(null)
+            let p = ''
+            _.each(this.option.character, function (v, k) {
+              if (v.enable) {
+                p += v.label
+              }
+            })
+            for (let i = 0; i < this.l; i++) {
+              o[i] = this.pick(p)
+            }
+            this.result = o.join('')
+          },
+          pick (str) {
+            return str.charAt(Math.floor(Math.random() * str.length))
+          }
+        },
+        watch: {
+          option: {
+            handler (nv) {
+              let s = false
+              _.each(nv.character, function (v, k) {
+                if (v.enable) {
+                  s = true
+                  return false
+                }
+              })
+              if (!s) {
+                this.$nextTick(() => {
+                  this.option.character.digit.enable = true
+                })
+              }
+              this.render()
+            },
+            deep: true
+          }
+        },
+        mounted () {
+          this.init = true
+          this.render()
+        }
+      }
+      Vue.createApp(rand).mount('#random')
+    </script>
+    <!-- Optional JavaScript; choose one of the two! -->
+
+    <!-- Option 1: Bootstrap Bundle with Popper -->
+    <script
+      src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/js/bootstrap.bundle.min.js"
+      integrity="sha384-JEW9xMcG8R+pH31jmWH6WWP0WintQrMb4s7ZOdauHnUtxwoG2vI5DkLtS3qm9Ekf"
+      crossorigin="anonymous"
+    ></script>
+
+    <!-- Option 2: Separate Popper and Bootstrap JS -->
+    <!--
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.1/dist/umd/popper.min.js" integrity="sha384-SR1sx49pcuLnqZUnnPwx6FCym0wLsk5JZuNx2bPPENzswTNFaQU1RDvt3wT4gWFG" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/js/bootstrap.min.js" integrity="sha384-j0CNLUeiqtyaRmlzUHCPZ+Gy5fQu0dQ6eZ/xAww941Ai1SxSY+0EQqNXNE6DZiVc" crossorigin="anonymous"></script>
+    -->
+  </body>
+</html>
