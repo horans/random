@@ -1,3 +1,3 @@
-# random
+# random string generator
 
-A simple online random string generator.
+A simple online password generator.
