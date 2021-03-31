@@ -4,13 +4,13 @@
     <!-- Required meta tags -->
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-
-    <!-- Bootstrap CSS -->
+    <link
+      rel="shortcut icon"
+      href="https://horans.github.io/asset/favicon.ico"
+    />
     <link
       href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/css/bootstrap.min.css"
       rel="stylesheet"
-      integrity="sha384-eOJMYsd53ii+scO/bJGFsiCZc+5NDVN2yr8+0RDqr0Ql0h+rP48ckxlpbzKgwra6"
-      crossorigin="anonymous"
     />
     <style>
       aside {
@@ -24,9 +24,12 @@
       .form-check label {
         cursor: pointer;
       }
-      nav:not(.enabled) {
+      nav.transition:not(.enabled) {
         opacity: 0;
         pointer-events: none;
+      }
+      .list-inline {
+        font-size: 0.75rem;
       }
       .toast {
         width: 6rem;
@@ -41,7 +44,7 @@
     *  description: simple online password generator     *
     *  author: horans@gmail.com                          *
     *  url: https://github.com/horans/random             *
-    *  update: 210330                                    *
+    *  update: 210331                                    *
     *****************************************************/
     -->
     <header class="my-4">
@@ -55,21 +58,23 @@
       <form class="container">
         <div class="input-group mb-3">
           <button
-            class="btn btn-outline-secondary dropdown-toggle"
+            class="btn btn-outline-primary dropdown-toggle"
             type="button"
             data-bs-toggle="dropdown"
             aria-expanded="false"
+            name="shortcut"
           >
             Length: {{ option.length.current }}
           </button>
           <ul class="dropdown-menu">
-            <li v-for="item in option.length.shortcut">
+            <li v-for="i in option.length.shortcut">
               <button
                 class="dropdown-item"
-                :class="{ active: item == option.length.current }"
-                @click.prevent="option.length.current = item"
+                :class="{ active: i == option.length.current }"
+                :name="'length-' + i"
+                @click.prevent="option.length.current = i"
               >
-                {{ item }}
+                {{ i }}
               </button>
             </li>
           </ul>
@@ -85,12 +90,12 @@
             class="btn btn-primary"
             type="button"
             name="generate"
-            @click="debouncedRender()"
+            @click="repeat"
           >
             Generate
           </button>
         </div>
-        <div>
+        <nav>
           <div
             class="form-check form-switch form-check-inline transition"
             v-for="(v, k) in option.character"
@@ -101,6 +106,7 @@
             <input
               class="form-check-input"
               type="checkbox"
+              name="character"
               :id="'character-' + k"
               v-model="v.enabled"
             />
@@ -108,7 +114,7 @@
               >{{ d.startCase(k) }}</label
             >
           </div>
-        </div>
+        </nav>
         <nav
           class="bg-light transition"
           :class="{ enabled: option.character.symbol.enabled }"
@@ -122,24 +128,37 @@
             <input
               class="form-check-input"
               type="checkbox"
-              :id="'character-symbol' + k"
+              name="symbol"
+              :id="'symbol-' + k"
               v-model="v.enabled"
             />
-            <label class="form-check-label" :for="'character-symbol-' + k"
+            <label class="form-check-label" :for="'symbol-' + k"
               >{{ v.label }}</label
             >
           </div>
         </nav>
         <div class="input-group input-group-lg mt-2">
-          <input
-            type="text"
-            class="form-control text-center font-monospace cursor-pointer"
+          <output
+            class="form-control text-center font-monospace cursor-pointer user-select-all"
             name="result"
-            readonly
-            v-model="result"
-            @click="debouncedCopy"
-          />
+            @click="debouncedCopy(result)"
+          >
+            {{ result }}
+          </output>
         </div>
+        <ul
+          class="list-inline mt-5 text-center text-black-50 font-monospace"
+          v-if="history.length > 0"
+        >
+          <li
+            class="list-inline-item cursor-pointer user-select-all"
+            v-for="(i, n) in history"
+            :id="'history-' + n"
+            @click="debouncedCopy(i)"
+          >
+            {{ i }}
+          </li>
+        </ul>
       </form>
     </main>
     <footer>
@@ -158,18 +177,10 @@
       </div>
     </footer>
 
-    <script src="https://unpkg.com/vue@next"></script>
-    <!-- <script src="https://unpkg.com/vue@3.0.9/dist/vue.global.prod.js" crossorigin="anonymous"></script> -->
-    <script
-      src="https://cdn.jsdelivr.net/npm/lodash@4.17.21/lodash.min.js"
-      integrity="sha256-qXBd/EfAdjOA2FGrGAG+b3YBn2tn5A6bhz+LSgYD96k="
-      crossorigin="anonymous"
-    ></script>
-    <script
-      src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/js/bootstrap.bundle.min.js"
-      integrity="sha384-JEW9xMcG8R+pH31jmWH6WWP0WintQrMb4s7ZOdauHnUtxwoG2vI5DkLtS3qm9Ekf"
-      crossorigin="anonymous"
-    ></script>
+    <!-- <script src="https://unpkg.com/vue@next"></script> -->
+    <script src="https://unpkg.com/vue@3.0.10/dist/vue.global.prod.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/lodash@4.17.21/lodash.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
       /* global Vue _ bootstrap */
       const rand = {
@@ -177,6 +188,7 @@
           return {
             init: false,
             result: null,
+            history: [],
             option: {
               length: {
                 min: 4,
@@ -195,30 +207,33 @@
                   label: 'abcdefghijklmnopqrstuvwxyz'
                 },
                 symbol: {
-                  enabled: true,
+                  enabled: false,
+                  label: 'Special Characters',
                   case: {
-                    exclamation: { enabled: true, label: '!' },
-                    questionMark: { enabled: true, label: '?' },
-                    hash: { enabled: true, label: '#' },
-                    asterisk: { enabled: true, label: '*' },
-                    comma: { enabled: true, label: ',' },
                     period: { enabled: true, label: '.' },
                     plus: { enabled: true, label: '+' },
                     minus: { enabled: true, label: '-' },
-                    underscore: { enabled: true, label: '_' },
-                    atSign: { enabled: true, label: '@' },
+                    asterisk: { enabled: true, label: '*' },
+                    slash: { enabled: true, label: '/' },
+                    hash: { enabled: true, label: '#' },
+                    exclamation: { enabled: false, label: '!' },
+                    questionMark: { enabled: false, label: '?' },
+                    comma: { enabled: false, label: ',' },
+                    underscore: { enabled: false, label: '_' },
+                    atSign: { enabled: false, label: '@' },
+                    dollarSign: { enabled: false, label: '$' },
                     ampersand: { enabled: false, label: '&' },
                     tilde: { enabled: false, label: '~' },
-                    slash: { enabled: false, label: '/' },
-                    verticalBar: { enabled: false, label: '|' },
                     caret: { enabled: false, label: '^' },
+                    verticalBar: { enabled: false, label: '|' },
                     parentheis: { false: false, label: '()' },
                     brace: { enabled: false, label: '{}' },
                     bracket: { enabled: false, label: '[]' }
                   }
                 }
               },
-              delay: 200
+              delay: 200,
+              list: 3
             },
             appearance: {
               tooltip: {
@@ -243,20 +258,28 @@
         methods: {
           // render output
           render () {
-            // initialize empty string
-            // stackoverflow.com/questions/27841362/
-            const output = new Array(this.l).fill(null)
-            // create character picking pool
+            let output = new Array(0)
+            // create character picking pool and fill in mandatory options
             let pool = ''
-            _.each(this.option.character, function (v, k) {
-              if (v.enabled) pool += v.label
+            _.each(this.option.character, (v, k) => {
+              if (v.enabled && k !== 'symbol') {
+                pool += v.label
+                output.push(this.pick(v.label))
+              }
             })
+            let poolSymbol = ''
             if (this.option.character.symbol.enabled) {
-              _.each(this.option.character.symbol.case, function (v, k) {
-                if (v.enabled) pool += v.label
+              _.each(this.option.character.symbol.case, (v, k) => {
+                if (v.enabled) poolSymbol += v.label
               })
+              output.push(this.pick(poolSymbol))
             }
-            // fill in
+            pool += poolSymbol
+            for (let i = 0; i < this.l - output.length; i++) {
+              output.push(null)
+            }
+            output = _.shuffle(output)
+            // fill in non-empty slots
             for (let i = 0; i < this.l; i++) {
               if (!output[i]) output[i] = this.pick(pool)
             }
@@ -267,32 +290,47 @@
             return str.charAt(Math.floor(Math.random() * str.length))
           },
           // copy generated string and show toast
-          copy () {
-            // www.w3schools.com/howto/howto_js_copy_clipboard.asp
-            const toCopy = document.querySelectorAll('[name=result]')[0]
-            toCopy.select()
-            toCopy.setSelectionRange(0, 99999)
-            document.execCommand('copy')
+          copy (val) {
+            navigator.clipboard.writeText(val)
             this.appearance.toast.show()
+          },
+          // fallback to first option when all are disabled
+          fallback (list) {
+            let s = false
+            _.each(list, (v, k) => {
+              if (v.enabled) {
+                s = true
+                return false
+              }
+            })
+            if (!s) {
+              this.$nextTick(() => {
+                _.each(list, (v, k) => {
+                  v.enabled = true
+                  return false
+                })
+              })
+            }
+          },
+          // generate more with same options
+          repeat () {
+            if (this.history.length === this.option.list) this.history.pop()
+            this.history.unshift(this.result)
+            this.render()
           }
         },
         watch: {
+          // generate new output when character options are changed
           option: {
             handler (nv) {
-              // when all character options are disabled, fallback to number enabled
-              let s = false
-              _.each(nv.character, function (v, k) {
-                if (v.enabled) {
-                  s = true
-                  return false
-                }
-              })
-              if (!s) {
-                this.$nextTick(() => {
-                  this.option.character.number.enabled = true
-                })
+              // fallback options
+              this.fallback(this.option.character)
+              if (nv.character.symbol.enabled) {
+                this.fallback(this.option.character.symbol.case)
               }
-              // generate new output when character options are changed
+              // reset history
+              this.history = []
+              // auto generate
               this.debouncedRender()
             },
             deep: true
@@ -311,7 +349,7 @@
             document.querySelectorAll('[data-bs-toggle="tooltip"]')
           )
           this.appearance.tooltip.list = this.appearance.tooltip.trigger.map(
-            function (el) {
+            el => {
               return new bootstrap.Tooltip(el, { trigger: 'hover' })
             }
           )
