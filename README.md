@@ -11,9 +11,9 @@ A simple online password generator.
 
 ## Vendor
 
-* [Bootstrap5]<https://github.com/twbs/bootstrap>
-* [Vue3]<https://github.com/vuejs/vue-next>
-* [Lodash]<https://github.com/lodash/lodash>
+* [Bootstrap5](https://github.com/twbs/bootstrap)
+* [Vue3](https://github.com/vuejs/vue-next)
+* [Lodash](https://github.com/lodash/lodash)
 
 ## Changelog
 

@@ -67,7 +67,7 @@
             Length: {{ option.length.current }}
           </button>
           <ul class="dropdown-menu">
-            <li v-for="i in option.length.shortcut">
+            <li v-for="i in option.length.shortcut" :key="i">
               <button
                 class="dropdown-item"
                 :class="{ active: i == option.length.current }"
@@ -90,7 +90,7 @@
             class="btn btn-primary"
             type="button"
             name="generate"
-            @click="repeat"
+            @click="debouncedRepeat"
           >
             Generate
           </button>
@@ -98,8 +98,9 @@
         <nav>
           <div
             class="form-check form-switch form-check-inline transition"
-            v-for="(v, k) in option.character"
             data-bs-toggle="tooltip"
+            v-for="(v, k) in option.character"
+            :key="k"
             :title="v.label"
             :class="{ 'bg-light': k === 'symbol' && v.enabled }"
           >
@@ -121,8 +122,9 @@
         >
           <div
             class="form-check form-check-inline form-control-sm"
-            v-for="(v, k) in option.character.symbol.case"
             data-bs-toggle="tooltip"
+            v-for="(v, k) in option.character.symbol.case"
+            :key="k"
             :title="d.startCase(k)"
           >
             <input
@@ -153,6 +155,7 @@
           <li
             class="list-inline-item cursor-pointer user-select-all"
             v-for="(i, n) in history"
+            :key="n"
             :id="'history-' + n"
             @click="debouncedCopy(i)"
           >
@@ -337,10 +340,12 @@
           }
         },
         created () {
-          // debounce the generation
+          // debounce the output
           this.debouncedRender = _.debounce(this.render, this.option.delay)
           // debounce the copying
           this.debouncedCopy = _.debounce(this.copy, this.option.delay)
+          // debounce the repeating
+          this.debouncedRepeat = _.debounce(this.repeat, this.option.delay)
         },
         mounted () {
           // initialize tooltip for character options
