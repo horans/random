@@ -4,16 +4,20 @@ A simple online password generator.
 
 ## Feature
 
-* String length 4-64 with quick selection
-* Support numbers, uppercases, lowercases and customizable symbols
-* Click to copy
-* keep a short list of previous generations
+- String length 4-64 with quick selection
+- Support numbers, uppercases, lowercases and customizable symbols
+- Click to copy
+- keep a short list of previous generations
 
 ## Vendor
 
-* [Bootstrap5](https://github.com/twbs/bootstrap)
-* [Vue3](https://github.com/vuejs/vue-next)
-* [Lodash](https://github.com/lodash/lodash)
+- [Bootstrap5](https://github.com/twbs/bootstrap)
+- [Vue3](https://github.com/vuejs/vue-next)
+- [Lodash](https://github.com/lodash/lodash)
+
+## Reference
+
+- [Math.random()](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Math/random)
 
 ## Changelog
 
